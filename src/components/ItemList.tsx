@@ -1,91 +1,88 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { fetchPokemonList, fetchPokemonDetails } from '../services/pokemonService';
 
 interface Pokemon {
   id: number;
   name: string;
   description: string;
   image: string;
+  [key: string]: number | string | string[];
 }
 
-const ItemList: React.FC = () => {
+const ItemList: React.FC = (): JSX.Element => {
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortAttribute, setSortAttribute] = useState<string>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchPokemonList = async () => {
+    async function fetchData() {
       try {
-        const response = await axios.get('https://pokeapi.co/api/v2/pokemon');
-        const { results } = response.data;
+        const results = await fetchPokemonList();
 
-        console.log(results)
+        const pokemonDataPromises = results.map(async (result: any) => {
+          const pokemonDetails = await fetchPokemonDetails(result.url);
+          const { id, name } = pokemonDetails;
+          const description = pokemonDetails.moves.map((move: any) => move.move.name).slice(0,3);
+          const image = pokemonDetails.sprites.front_default;
 
-        const pokemonDataPromises = results.map((result: any) => axios.get(result.url));
+          return { id, name, description, image };
+        });
 
-        console.log(pokemonDataPromises)
-        const pokemonDataResponses = await Promise.all(pokemonDataPromises);
-
-        console.log(pokemonDataResponses)
-        const pokemonData = pokemonDataResponses.map((response: any) => response.data);
-
-        console.log(pokemonData)
-
-        const formattedPokemonList: Pokemon[] = pokemonData.map((pokemon: any) => ({
-          id: pokemon.id,
-          name: pokemon.name,
-          description: pokemon.moves.slice(0,3).map((element: any) => element.move.name),
-          image: pokemon.sprites.front_default,
-        }));
-
-        setPokemonList(formattedPokemonList);
-        setIsLoading(false);
+        const pokemonData = await Promise.all(pokemonDataPromises);
+        setPokemonList(pokemonData);
       } catch (error) {
-        console.error('Error fetching Pokemon list:', error);
+        console.error('Error fetching Pokemon:', error);
       }
-    };
+    }
 
-    fetchPokemonList();
+    fetchData();
   }, []);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
+  };
+
+  const handleSort = (attribute: string) => {
+    if (attribute === sortAttribute) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortAttribute(attribute);
+      setSortDirection('asc');
+    }
   };
 
   const filteredPokemonList = pokemonList.filter((pokemon) =>
     pokemon.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sortedPokemonList = filteredPokemonList.sort((a, b) => {
+    if (a[sortAttribute] < b[sortAttribute]) return sortDirection === 'asc' ? -1 : 1;
+    if (a[sortAttribute] > b[sortAttribute]) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
-    <div className="App">
-      <header>
-        <h1>Pokemon List</h1>
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={searchTerm}
-          onChange={handleSearch}
-        />
-      </header>
-      {/* Render the list of Pokemon items */}
-      <ul className="pokemon-list">
-        {filteredPokemonList.map((pokemon) => (
-          <li key={pokemon.id}>
-            <img src={pokemon.image} alt={pokemon.name} />
-            <div>
-              <h3>{pokemon.name}</h3>
-              <p>{pokemon.description}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <div>
+    <header>
+      <h1>Pokemon List</h1>
+      <input type="text" placeholder="Search by name" onChange={handleSearch} />
+    </header>
+    <section>
+      <button onClick={() => handleSort('name')}>Sort by Name</button>
+      <button onClick={() => handleSort('id')}>Sort by ID</button>
+    </section>
+    <ul>
+      {sortedPokemonList.map((pokemon) => (
+        <li key={pokemon.id}>
+          <img src={pokemon.image} alt={pokemon.name} />
+          <h3>{pokemon.name}</h3>
+          <p>Description: {pokemon.description}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
   );
 };
 
