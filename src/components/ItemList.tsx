@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchPokemonList, fetchPokemonDetails } from '../services/pokemonService';
 import PokemonItem from './PokemonItem';
 import styled from 'styled-components';
+import AddPokemonForm from './AddPokemonForm';
 
 
 interface Pokemon {
@@ -17,7 +18,6 @@ const ItemList: React.FC = (): JSX.Element => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortAttribute, setSortAttribute] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
 
   useEffect(() => {
     async function fetchData() {
@@ -66,6 +66,10 @@ const ItemList: React.FC = (): JSX.Element => {
     return 0;
   });
 
+  const handleAddPokemon = (pokemon: Pokemon) => {
+    setPokemonList([...pokemonList, pokemon]);
+  };
+
   return (
     <div>
     <header>
@@ -80,7 +84,8 @@ const ItemList: React.FC = (): JSX.Element => {
         {sortedPokemonList.map((pokemon) => (
           <PokemonItem key={pokemon.id} pokemon={pokemon} />
         ))}
-      </PokemonList>
+    </PokemonList>
+    <AddPokemonForm onAddPokemon={handleAddPokemon} />
   </div>
   );
 };
