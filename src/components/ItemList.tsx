@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { fetchPokemonList, fetchPokemonDetails } from '../services/pokemonService';
+import PokemonItem from './PokemonItem';
+import styled from 'styled-components';
+
 
 interface Pokemon {
   id: number;
@@ -73,17 +76,19 @@ const ItemList: React.FC = (): JSX.Element => {
       <button onClick={() => handleSort('name')}>Sort by Name</button>
       <button onClick={() => handleSort('id')}>Sort by ID</button>
     </section>
-    <ul>
-      {sortedPokemonList.map((pokemon) => (
-        <li key={pokemon.id}>
-          <img src={pokemon.image} alt={pokemon.name} />
-          <h3>{pokemon.name}</h3>
-          <p>Description: {pokemon.description}</p>
-        </li>
-      ))}
-    </ul>
+    <PokemonList>
+        {sortedPokemonList.map((pokemon) => (
+          <PokemonItem key={pokemon.id} pokemon={pokemon} />
+        ))}
+      </PokemonList>
   </div>
   );
 };
 
 export default ItemList;
+
+const PokemonList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+`;
