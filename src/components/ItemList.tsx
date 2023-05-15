@@ -10,6 +10,8 @@ interface Pokemon {
 
 const ItemList: React.FC = () => {
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -51,15 +53,38 @@ const ItemList: React.FC = () => {
     return <div>Loading...</div>;
   }
 
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const filteredPokemonList = pokemonList.filter((pokemon) =>
+    pokemon.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+
   return (
-    <div>
-      {pokemonList.map((pokemon: Pokemon) => (
-        <div key={pokemon.id}>
-          <h3>{pokemon.name}</h3>
-          <p>{pokemon.description}</p>
-          <img src={pokemon.image} alt={pokemon.name} />
-        </div>
-      ))}
+    <div className="App">
+      <header>
+        <h1>Pokemon List</h1>
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={handleSearch}
+        />
+      </header>
+      {/* Render the list of Pokemon items */}
+      <ul className="pokemon-list">
+        {filteredPokemonList.map((pokemon) => (
+          <li key={pokemon.id}>
+            <img src={pokemon.image} alt={pokemon.name} />
+            <div>
+              <h3>{pokemon.name}</h3>
+              <p>{pokemon.description}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
